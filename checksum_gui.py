@@ -6,7 +6,7 @@ Icon By : https://www.flaticon.com/authors/freepik
 import sys
 
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, QFileDialog
+from PyQt5.QtWidgets import QApplication, QAction, qApp, QFileDialog
 
 from checksum import *
 from pyqt_creator import *
@@ -171,23 +171,23 @@ class checksum_window(QMainWindow):
 
         # Set Events for State Changed
         self.blake2_checkbox.stateChanged.connect(
-            lambda: self.change_hash_type(self.blake2_checkbox.isChecked(), hashlib.blake2b()))
+            lambda: self.change_hash_type(self.blake2_checkbox.isChecked(), hashlib.blake2b))
         self.sha3_224_checkbox.stateChanged.connect(
-            lambda: self.change_hash_type(self.sha3_224_checkbox.isChecked(), hashlib.sha3_224()))
+            lambda: self.change_hash_type(self.sha3_224_checkbox.isChecked(), hashlib.sha3_224))
         self.sha3_256_checkbox.stateChanged.connect(
-            lambda: self.change_hash_type(self.sha3_256_checkbox.isChecked(), hashlib.sha3_256()))
+            lambda: self.change_hash_type(self.sha3_256_checkbox.isChecked(), hashlib.sha3_256))
         self.sha3_384_checkbox.stateChanged.connect(
-            lambda: self.change_hash_type(self.sha3_384_checkbox.isChecked(), hashlib.sha3_384()))
+            lambda: self.change_hash_type(self.sha3_384_checkbox.isChecked(), hashlib.sha3_384))
         self.sha3_512_checkbox.stateChanged.connect(
-            lambda: self.change_hash_type(self.sha3_512_checkbox.isChecked(), hashlib.sha3_512()))
+            lambda: self.change_hash_type(self.sha3_512_checkbox.isChecked(), hashlib.sha3_512))
         self.sha224_checkbox.stateChanged.connect(
-            lambda: self.change_hash_type(self.sha224_checkbox.isChecked(), hashlib.sha224()))
+            lambda: self.change_hash_type(self.sha224_checkbox.isChecked(), hashlib.sha224))
         self.sha256_checkbox.stateChanged.connect(
-            lambda: self.change_hash_type(self.sha256_checkbox.isChecked(), hashlib.sha256()))
+            lambda: self.change_hash_type(self.sha256_checkbox.isChecked(), hashlib.sha256))
         self.sha384_checkbox.stateChanged.connect(
-            lambda: self.change_hash_type(self.sha384_checkbox.isChecked(), hashlib.sha384()))
+            lambda: self.change_hash_type(self.sha384_checkbox.isChecked(), hashlib.sha384))
         self.sha512_checkbox.stateChanged.connect(
-            lambda: self.change_hash_type(self.sha512_checkbox.isChecked(), hashlib.sha512()))
+            lambda: self.change_hash_type(self.sha512_checkbox.isChecked(), hashlib.sha512))
 
         # Add Buttons to UI Group
         self.ui_group.addButton(self.blake2_checkbox)
@@ -276,6 +276,8 @@ class checksum_window(QMainWindow):
     def calculate_checksum_data(self):
         paths = get_path_to_all_files(ignore_files = ["checksum.json", os.path.basename(__file__)])
 
+        print(self.hash_type)
+
         if self.skip_file_checkbox.isChecked():
 
             # Get Custom File Size
@@ -283,18 +285,19 @@ class checksum_window(QMainWindow):
             if self.blake2_checkbox.isChecked():
 
                 self.checksum_data = [(path, size_cap_checksum_blake2(path,
-                                                                      digest_size = 32,
                                                                       size_cap_in_mb = self.custom_file_size))
                                       for path in paths]
             else:
                 self.checksum_data = [
-                    (path, size_cap_checksum(path, hash_type = self.hash_type, size_cap_in_mb = self.custom_file_size))
+                    (
+                        path,
+                        size_cap_checksum(path, hash_type = self.hash_type(), size_cap_in_mb = self.custom_file_size))
                     for path in paths]
         else:
             if self.blake2_checkbox.isChecked():
-                self.checksum_data = [(path, checksum_blake2(path, digest_size = 32)) for path in paths]
+                self.checksum_data = [(path, checksum_blake2(path)) for path in paths]
             else:
-                self.checksum_data = [(path, checksum(path, hash_type = self.hash_type)) for path in paths]
+                self.checksum_data = [(path, checksum(path, hash_type = self.hash_type())) for path in paths]
 
         self.set_log_file_text(stringify_checksum_data_array(self.checksum_data))
 
@@ -350,7 +353,7 @@ class checksum_window(QMainWindow):
         self.log_file.setFontPointSize(10)
         self.log_file.setText(text)
 
-    def change_hash_type(self, is_checked = False, hash_type = hashlib.blake2b()):
+    def change_hash_type(self, is_checked = False, hash_type = hashlib.blake2b):
         """
         Change Hash Algorithm
         :param is_checked: Checkbox is Checked Value

@@ -107,7 +107,7 @@ def size_cap_checksum_blake2(file_path, chunk_num_blocks = 128, digest_size = 64
         return checksum_blake2(file_path, chunk_num_blocks, digest_size)
 
 
-def checksum(file_path, hash_type = hashlib.md5(), chunk_num_blocks = 128):
+def checksum(file_path, hash_type = hashlib.sha256, chunk_num_blocks = 128):
     """
     Compute a hash Checksum of the given File. Default Hash Method is MD5
     :param file_path: Path of the File.
@@ -115,14 +115,31 @@ def checksum(file_path, hash_type = hashlib.md5(), chunk_num_blocks = 128):
     :param chunk_num_blocks:
     :return: Hexadecimal Checksum of the File.
     """
+    hash_to_use = None
+    hash_to_use = hash_type
     with open(file_path, "rb") as file:
         # Read and Iterate over the Data a step at a time until an Empty Line is received.
-        for chunk in iter(lambda: file.read(chunk_num_blocks * hash_type.block_size), b""):
-            hash_type.update(chunk)
-    return hash_type.hexdigest()
+        for chunk in iter(lambda: file.read(chunk_num_blocks * hash_to_use.block_size), b""):
+            hash_to_use.update(chunk)
+    return hash_to_use.hexdigest()
 
 
-def size_cap_checksum(file_path, hash_type = hashlib.md5(), chunk_num_blocks = 128, size_cap_in_mb = 250):
+def checksum_sha(file_path, chunk_num_blocks = 128):
+    """
+    Compute a hash Checksum of the given File. Default Hash Method is MD5
+    :param file_path: Path of the File.
+    :param chunk_num_blocks:
+    :return: Hexadecimal Checksum of the File.
+    """
+    hash_to_use = hashlib.sha3_512()
+    with open(file_path, "rb") as file:
+        # Read and Iterate over the Data a step at a time until an Empty Line is received.
+        for chunk in iter(lambda: file.read(chunk_num_blocks * hash_to_use.block_size), b""):
+            hash_to_use.update(chunk)
+    return hash_to_use.hexdigest()
+
+
+def size_cap_checksum(file_path, hash_type = hashlib.sha256, chunk_num_blocks = 128, size_cap_in_mb = 250):
     """
     Compute the Checksum of the given file smaller than the given size cap in Megabytes. Default Hash Method is MD5
     :param file_path: Path of the File.
@@ -228,26 +245,23 @@ if __name__ == "__main__":
     paths = get_path_to_all_files()
 
     # Print the file Paths.
-    print("File Paths:")
-    pretty_print(paths)
+    # print("File Paths:")
+    # pretty_print(paths)
     print()
 
     # Calculate the Checksum
-    hashed_data_blake2b = [(path, checksum_blake2(path, digest_size = 16)) for path in paths]
-
-    # [(path, checksum(path, hash_type = hashlib.sha1) for path in paths)]
-    # [(path, checksum(path, hash_type = hashlib.sha256) for path in paths)]
-    # [(path, checksum(path, hash_type = hashlib.sha512) for path in paths)]
-    # [(path, checksum(path, hash_type = hashlib.sha3_256) for path in paths)]
-    # [(path, checksum(path, hash_type = hashlib.sha3_512) for path in paths)]
-    # [(path, checksum(path, hash_type = hashlib.md5) for path in paths)]
-    # [(path, checksum(path, hash_type = hashlib.blake2s) for path in paths)]
+    hashed_data = [(path, checksum_sha(path)) for path in paths]
 
     # Pretty Print the Checksum
     print("Blake2b Checksum:")
-    pretty_print(hashed_data_blake2b)
+    pretty_print(hashed_data)
     print()
 
+    hashed_data = [(path, checksum_sha(path)) for path in paths]
+
+    print("Blake2b Checksum:")
+    pretty_print(hashed_data)
+    print()
     # Write the Data to a file.
     # write_checksum_to_json(hashed_data_blake2b)
 
