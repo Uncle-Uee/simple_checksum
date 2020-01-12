@@ -215,7 +215,7 @@ class checksum_window(QMainWindow):
         horizontal_layout1.addStretch()
 
         # Add Horizontal Layout to Form Layout.
-        self.form_layout.addRow("Secure Hash Types:", horizontal_layout1)
+        self.form_layout.addRow("Hash Types:", horizontal_layout1)
 
         return horizontal_layout1
 

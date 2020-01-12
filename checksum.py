@@ -20,9 +20,9 @@ Files bigger than the size_cap_in_mb will not be processed.
 Files bigger than the size_cap_in_mb will not be processed.
 """
 
-import os
 import hashlib
 import json
+import os
 
 # Program Files Paths in os.environ
 PROGRAMFILES = "PROGRAMFILES"
@@ -226,7 +226,7 @@ def stringify_checksum_data_array(checksum_data = []):
             string_checksum_data += f"{os.path.basename(file_path)} : {hash_value}\n"
         else:
             continue
-
+    print(f"String Checksum :\n{string_checksum_data}")
     return string_checksum_data
 
 
@@ -237,7 +237,7 @@ def stringify_checksum_data_dictionary(checksum_data = {}):
             string_checksum_data += f"{os.path.basename(key)} : {value}\n"
         else:
             continue
-
+    print(f"String Checksum :\n{string_checksum_data}")
     return string_checksum_data
 
 
