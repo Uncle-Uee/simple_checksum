@@ -56,7 +56,8 @@ def get_path_to_all_files(absolute_path = os.getcwd(), ignore_files = []):
     """
     list_of_files = list()
     for (directory_path, directory_names, filenames) in os.walk(absolute_path):
-        list_of_files += [os.path.join(directory_path, file) for file in filenames if file not in ignore_files]
+        list_of_files += [os.path.join(directory_path, file) for file in filenames if
+                          "checksum" not in file and ".json" not in file and file not in ignore_files]
     return list_of_files
 
 
@@ -124,21 +125,6 @@ def checksum(file_path, hash_type = hashlib.sha256, chunk_num_blocks = 128):
     return hash_to_use.hexdigest()
 
 
-def checksum_sha(file_path, chunk_num_blocks = 128):
-    """
-    Compute a hash Checksum of the given File. Default Hash Method is MD5
-    :param file_path: Path of the File.
-    :param chunk_num_blocks:
-    :return: Hexadecimal Checksum of the File.
-    """
-    hash_to_use = hashlib.sha3_512()
-    with open(file_path, "rb") as file:
-        # Read and Iterate over the Data a step at a time until an Empty Line is received.
-        for chunk in iter(lambda: file.read(chunk_num_blocks * hash_to_use.block_size), b""):
-            hash_to_use.update(chunk)
-    return hash_to_use.hexdigest()
-
-
 def size_cap_checksum(file_path, hash_type = hashlib.sha256, chunk_num_blocks = 128, size_cap_in_mb = 250):
     """
     Compute the Checksum of the given file smaller than the given size cap in Megabytes. Default Hash Method is MD5
@@ -167,9 +153,16 @@ def write_checksum_to_json(checksum_data = [], path = os.path.join(os.getcwd()))
     :param path: Path of the File.
     :return:
     """
+    print(path)
     file_name = os.path.basename(path)
+    print(file_name)
     if "checksum" not in file_name.lower():
-        path = path.replace(file_name, f"{file_name}-checksum")
+        if ".json" in file_name.lower():
+            path = path.replace(".json", "-checksum.json")
+            print(path)
+        else:
+            path += "-checksum.json"
+            print(path)
 
     checksum_dictionary = {}
     for file_path, hash_value in checksum_data:
@@ -198,6 +191,31 @@ def compare(checksum_data = [], checksum_file_path = os.path.join(os.getcwd()), 
                 print(f"[This is an altered File!]\n{file_path}\n{file_name} : {hash} \n")
         else:
             print(f"[This is a new File!]\n{file_path}\n{file_name} : {hash} \n")
+
+
+def compare(new_checksum_data = [], checksum_data_dict = {}):
+    """
+    Compare the new Computed Hash Values with the Existing Backup to check if any files were altered or newly found.
+    :param new_checksum_data: List of Checksum data. Each element is a Tuple (file_path, hash_code)
+    :param checksum_data_dict:
+    :return:
+    """
+    checksum_string = ""
+
+    for file_path, hash_value in new_checksum_data:
+        if file_path in checksum_data_dict.keys():
+            file_name = os.path.basename(file_path)
+            if hash_value.lower() == checksum_data_dict[file_path].lower():
+                checksum_string += f"[Match]\n{file_path}\n{file_name} : {hash_value} \n\n"
+                print(checksum_string)
+            else:
+                checksum_string += f"[This is an altered File!]\n{file_path}\n{file_name} : {hash_value} \n\n"
+                print(checksum_string)
+        else:
+            checksum_string += f"[This is a new File!]\n{file_path}\n{file_name} : {hash_value} \n\n"
+            print(checksum_string)
+
+    return checksum_string
 
 
 def stringify_checksum_data_array(checksum_data = []):
@@ -250,25 +268,12 @@ if __name__ == "__main__":
     print()
 
     # Calculate the Checksum
-    hashed_data = [(path, checksum_sha(path)) for path in paths]
+    hashed_data = [(path, checksum_blake2(path)) for path in paths]
 
     # Pretty Print the Checksum
     print("Blake2b Checksum:")
     pretty_print(hashed_data)
     print()
-
-    hashed_data = [(path, checksum_sha(path)) for path in paths]
-
-    print("Blake2b Checksum:")
-    pretty_print(hashed_data)
-    print()
-    # Write the Data to a file.
-    # write_checksum_to_json(hashed_data_blake2b)
-
-    # Compare Check.
-    # compare(hashed_data_blake2b)
-    #
-    # print(is_64_bit_os())
 
     end = timer()
     print(end - start)  # Time in seconds, e.g. 5.38091952400282
