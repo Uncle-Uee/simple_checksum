@@ -12,7 +12,7 @@ from checksum import *
 from pyqt_creator import *
 
 
-class checksum_window(QMainWindow):
+class checksum_simple_window(QMainWindow):
     """
     Checksum Window Class.
     """
@@ -46,7 +46,7 @@ class checksum_window(QMainWindow):
     """ CONSTRUCTOR """
 
     def __init__(self):
-        super(checksum_window, self).__init__()
+        super(checksum_simple_window, self).__init__()
         self.main_window_setup()
         self.menu_bar()
         self.main_window_layout_setup()
@@ -78,6 +78,7 @@ class checksum_window(QMainWindow):
 
         # Create Root Menus
         file_menu = self.bar.addMenu("File")
+        self.hash_menu = self.bar.addMenu("Hash Type")
 
         # Create Actions for Menus
         open_action = QAction("Open", self)
@@ -90,16 +91,31 @@ class checksum_window(QMainWindow):
 
         quit_action = QAction('Quit', self)
         quit_action.setShortcut("Ctrl+Q")
+        quit_action.setStatusTip("Quit Application.")
+
+        self.blake2_hash_action = QAction("Blake2", self)
+        self.blake2_hash_action.setCheckable(True)
+        self.blake2_hash_action.setChecked(True)
+        self.blake2_hash_action.setStatusTip("Use Blake2 Hashing Algorithm.")
+
+        self.sha3_512_hash_action = QAction("SHA3_512", self)
+        self.sha3_512_hash_action.setCheckable(True)
+        self.sha3_512_hash_action.setStatusTip("Use SHA3_512 Hashing Algorithm.")
 
         # Add Actions
         file_menu.addAction(open_action)
         file_menu.addAction(save_action)
         file_menu.addAction(quit_action)
 
+        self.hash_menu.addAction(self.blake2_hash_action)
+        self.hash_menu.addAction(self.sha3_512_hash_action)
+
         # Events
         open_action.triggered.connect(self.open_file_dialog)
         save_action.triggered.connect(lambda: self.save_file_dialog())
         quit_action.triggered.connect(lambda: (qApp.quit(), print("Close Application!")))
+        self.blake2_hash_action.toggled.connect(lambda: self.__blake2_hash_action())
+        self.sha3_512_hash_action.toggled.connect(lambda: self.__sha3_512_hash_action())
 
     def main_window_layout_setup(self):
         """
@@ -123,7 +139,6 @@ class checksum_window(QMainWindow):
         :return:
         """
         # CUSTOM GUI
-        secure_hash_type_hlayout = self.choose_hash_type()
         file_size_hlayout = self.choose_file_sizes_to_ignore()
         self.log_file = self.checksum_log_file()
         self.hash_button = self.calculate_hash_button()
@@ -134,7 +149,6 @@ class checksum_window(QMainWindow):
 
         # Add Form and Horizontal Layout to Vertical Layout
         vertical_layout.addLayout(self.form_layout)
-        vertical_layout.addLayout(secure_hash_type_hlayout)
         vertical_layout.addLayout(file_size_hlayout)
 
         # Add Widgets to Vertical Layout.
@@ -145,80 +159,6 @@ class checksum_window(QMainWindow):
         # Set MainWindow Layout to Vertical Layout
         self.setLayout(vertical_layout)
 
-    def choose_hash_type(self):
-        """
-        Choose a Hashing Algorithm. Each Hashing Algorithm has its own benefits. The most secure to use are Blake2,
-        SHA256, SHA512 and SHA3 implementations.
-        I omitted SHA224, SHA384, SHA3_224 and SHA3_384 because there are many options already available. They can be added
-        if requested or you can add them yourself.
-        :return:
-        """
-        # Create Check Boxes
-        self.blake2_checkbox = create_check_box(text = "Blake2",
-                                                tooltip = "Use Blake2 Hash Algorithm")
-        self.sha256_checkbox = create_check_box(text = "SHA256", tooltip = "Use SHA256 Hash Algorithm.")
-        self.sha224_checkbox = create_check_box(text = "SHA224", tooltip = "Use SHA224 Hash Algorithm.")
-        self.sha384_checkbox = create_check_box(text = "SHA384", tooltip = "Use SHA384 Hash Algorithm.")
-        self.sha512_checkbox = create_check_box(text = "SHA512", tooltip = "Use SHA512 Hash Algorithm.")
-        self.sha3_256_checkbox = create_check_box(text = "SHA3_256",
-                                                  tooltip = "Use SHA3_256 Hash Algorithm.")
-        self.sha3_224_checkbox = create_check_box(text = "SHA3_224",
-                                                  tooltip = "Use SHA3_224 Hash Algorithm.")
-        self.sha3_384_checkbox = create_check_box(text = "SHA3_384",
-                                                  tooltip = "Use SHA3_384 Hash Algorithm.")
-        self.sha3_512_checkbox = create_check_box(text = "SHA3_512",
-                                                  tooltip = "Use SHA3_512 Hash Algorithm.")
-
-        self.blake2_checkbox.setChecked(True)
-
-        # Set Events for State Changed
-        self.blake2_checkbox.stateChanged.connect(
-            lambda: self.__change_hash_type(self.blake2_checkbox.isChecked(), hashlib.blake2b))
-
-        self.sha3_224_checkbox.stateChanged.connect(
-            lambda: self.__change_hash_type(self.sha3_224_checkbox.isChecked(), hashlib.sha3_224))
-        self.sha3_256_checkbox.stateChanged.connect(
-            lambda: self.__change_hash_type(self.sha3_256_checkbox.isChecked(), hashlib.sha3_256))
-        self.sha3_384_checkbox.stateChanged.connect(
-            lambda: self.__change_hash_type(self.sha3_384_checkbox.isChecked(), hashlib.sha3_384))
-
-        self.sha3_512_checkbox.stateChanged.connect(
-            lambda: self.__change_hash_type(self.sha3_512_checkbox.isChecked(), hashlib.sha3_512))
-
-        self.sha224_checkbox.stateChanged.connect(
-            lambda: self.__change_hash_type(self.sha224_checkbox.isChecked(), hashlib.sha224))
-        self.sha256_checkbox.stateChanged.connect(
-            lambda: self.__change_hash_type(self.sha256_checkbox.isChecked(), hashlib.sha256))
-        self.sha384_checkbox.stateChanged.connect(
-            lambda: self.__change_hash_type(self.sha384_checkbox.isChecked(), hashlib.sha384))
-        self.sha512_checkbox.stateChanged.connect(
-            lambda: self.__change_hash_type(self.sha512_checkbox.isChecked(), hashlib.sha512))
-
-        # Add Buttons to UI Group
-        self.ui_group.addButton(self.blake2_checkbox)
-        self.ui_group.addButton(self.sha3_224_checkbox)
-        self.ui_group.addButton(self.sha3_256_checkbox)
-        self.ui_group.addButton(self.sha3_384_checkbox)
-        self.ui_group.addButton(self.sha3_512_checkbox)
-        self.ui_group.addButton(self.sha224_checkbox)
-        self.ui_group.addButton(self.sha256_checkbox)
-        self.ui_group.addButton(self.sha384_checkbox)
-        self.ui_group.addButton(self.sha512_checkbox)
-
-        # Create Horizontal Layout 1.
-        horizontal_layout1 = create_horizontal_layout(self.blake2_checkbox, self.sha3_224_checkbox,
-                                                      self.sha3_256_checkbox, self.sha3_384_checkbox,
-                                                      self.sha3_512_checkbox, self.sha224_checkbox,
-                                                      self.sha256_checkbox,
-                                                      self.sha384_checkbox, self.sha512_checkbox)
-
-        horizontal_layout1.addStretch()
-
-        # Add Horizontal Layout to Form Layout.
-        self.form_layout.addRow("Hash Types:", horizontal_layout1)
-
-        return horizontal_layout1
-
     def choose_file_sizes_to_ignore(self):
         """
         Choose a file Size to Ignore.
@@ -228,6 +168,8 @@ class checksum_window(QMainWindow):
         # Create Check Box
         self.skip_file_checkbox = create_check_box(
             tooltip = "Skip Files that are bigger than the chosen or given size in megabytes.")
+        self.skip_file_checkbox.setStatusTip(
+            "Skip and Do not Calculate the Checksum of Files Greater than the Given or Provided Size in Megabytes.")
 
         # Create Combo Box
         self.combo_box = QComboBox()
@@ -265,27 +207,42 @@ class checksum_window(QMainWindow):
         # Create Line Edit Widget
         log_file = create_text_edit()
 
+        log_file.setToolTip("Checksum Log Text")
+        log_file.setStatusTip(
+            "This is where the new Calculated Checksum Data or Opened Checksum File Data is Displayed.")
+
         # Set to ReadOnly True
         log_file.setReadOnly(True)
 
         return log_file
 
     def calculate_hash_button(self):
-        hash_button = create_button(text = "Calculate Hash")
-        hash_button.clicked.connect(lambda: self.calculate_checksum_data())
-        return hash_button
+        """
+        Create Calculate Hash Button
+        :return:
+        """
+        button = create_button(text = "Calculate Checksum of Files")
+        button.clicked.connect(lambda: self.calculate_checksum_data())
+        button.setStatusTip(
+            "Calculate the Checksum of all the files in the Directory where this Program is Placed. "
+            "Files in sub-directories are included.")
+        return button
 
     def calculate_checksum_data(self):
+        """
+        Calculate Checksum Data
+        :return:
+        """
         paths = get_path_to_all_files(
             ignore_files = [os.path.basename(__file__), sys.argv[0], os.path.basename(sys.argv[0]), "checksum.py"])
 
-        print(self.__hash_type)
+        print(f"Hash Type: {self.__hash_type}\n")
 
         if self.skip_file_checkbox.isChecked():
 
             # Get Custom File Size
             self.custom_file_size = self.get_file_size(self.combo_box.currentText())
-            if self.blake2_checkbox.isChecked():
+            if self.blake2_hash_action.isChecked():
 
                 self.checksum_data = [(path, size_cap_checksum_blake2(path,
                                                                       size_cap_in_mb = self.custom_file_size))
@@ -297,7 +254,7 @@ class checksum_window(QMainWindow):
                         size_cap_checksum(path, hash_type = self.__hash_type(), size_cap_in_mb = self.custom_file_size))
                     for path in paths]
         else:
-            if self.blake2_checkbox.isChecked():
+            if self.blake2_hash_action.isChecked():
                 self.checksum_data = [(path, checksum_blake2(path)) for path in paths]
             else:
                 self.checksum_data = [(path, checksum(path, hash_type = self.__hash_type())) for path in paths]
@@ -305,11 +262,22 @@ class checksum_window(QMainWindow):
         self.set_log_file_text(stringify_checksum_data_array(self.checksum_data))
 
     def compare_hash_button(self):
+        """
+        Create Compare Hash Button
+        :return: Button
+        """
         button = create_button(text = "Compare Checksum with Checksum File")
         button.clicked.connect(lambda: self.compare_new_checksum_with_checksum_file())
+        button.setStatusTip(
+            "Compare the Checksum Data that was Calculated (as seen in the Log), "
+            "with previously saved Checksum data, saved in a Checksum Json File.")
         return button
 
     def compare_new_checksum_with_checksum_file(self):
+        """
+        Compare Checksum with Saved Checksum Json
+        :return:
+        """
         if self.log_file.toPlainText() == "":
             self.message = QMessageBox()
             self.message.setWindowTitle("Warning")
@@ -344,15 +312,15 @@ class checksum_window(QMainWindow):
                 if hash_value.lower() == checksum_dict[file_path].lower():
                     checksum_string += f"[Match]\n{file_path}\n{file_name} : {hash_value} \n\n"
                     self.log_file.setText(checksum_string)
-                    print(checksum_string)
+                    print(f"\nChecksum :\n{checksum_string}\n")
                 else:
                     checksum_string += f"[This is an altered File!]\n{file_path}\n{file_name} : {hash_value} \n\n"
-                    print(checksum_string)
+                    print(f"\nChecksum :\n{checksum_string}\n")
                     self.log_file.setText(checksum_string)
             else:
                 file_name = os.path.basename(file_path)
                 checksum_string += f"[This is a new File!]\n{file_path}\n{file_name} : {hash_value} \n\n"
-                print(checksum_string)
+                print(f"\nChecksum :\n{checksum_string}\n")
                 self.log_file.setText(checksum_string)
 
         return checksum_string
@@ -379,7 +347,7 @@ class checksum_window(QMainWindow):
             self.checksum_data = checksum_data_dict_to_array(json.loads(self.checksum_string))
             self.set_log_file_text(text = stringify_checksum_data_array(self.checksum_data))
 
-            print(self.checksum_data)
+            print(f"\nChecksum Data :\n{self.checksum_data}")
 
     def save_file_dialog(self):
         """
@@ -418,6 +386,30 @@ class checksum_window(QMainWindow):
         """
         if is_checked:
             self.__hash_type = hash_type
+
+    def __blake2_hash_action(self):
+        """
+        Blake2 Hash Action Event.
+        :return:
+        """
+        if self.blake2_hash_action.isChecked():
+            self.sha3_512_hash_action.setChecked(False)
+            self.__hash_type = hashlib.blake2b
+        else:
+            self.sha3_512_hash_action.setChecked(True)
+            self.__hash_type = hashlib.sha3_512
+
+    def __sha3_512_hash_action(self):
+        """
+        SHA3 512 Hash Action Event.
+        :return:
+        """
+        if self.sha3_512_hash_action.isChecked():
+            self.blake2_hash_action.setChecked(False)
+            self.__hash_type = hashlib.sha3_512
+        else:
+            self.blake2_hash_action.setChecked(True)
+            self.__hash_type = hashlib.blake2b
 
     def choose_file_size_active(self, is_checked = False):
         """
@@ -469,7 +461,7 @@ class checksum_window(QMainWindow):
 
 def window():
     application = QApplication(sys.argv)
-    win = checksum_window()
+    win = checksum_simple_window()
     win.show()
     sys.exit(application.exec_())
 
