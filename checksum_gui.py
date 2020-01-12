@@ -12,7 +12,7 @@ from checksum import *
 from pyqt_creator import *
 
 
-class checksum_simple_window(QMainWindow):
+class checksum_window(QMainWindow):
     """
     Checksum Window Class.
     """
@@ -46,7 +46,7 @@ class checksum_simple_window(QMainWindow):
     """ CONSTRUCTOR """
 
     def __init__(self):
-        super(checksum_simple_window, self).__init__()
+        super(checksum_window, self).__init__()
         self.main_window_setup()
         self.menu_bar()
         self.main_window_layout_setup()
@@ -461,7 +461,7 @@ class checksum_simple_window(QMainWindow):
 
 def window():
     application = QApplication(sys.argv)
-    win = checksum_simple_window()
+    win = checksum_window()
     win.show()
     sys.exit(application.exec_())
 
